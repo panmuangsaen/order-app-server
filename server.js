@@ -24,7 +24,7 @@ const bidderWorker = new Worker(
     async (bidder) => {
     console.log('Processing bidder:', bidder.id);
     // Simulate order processing
-    await new Promise((resolve) => setTimeout(resolve, 10000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     console.log('bidder processed:', bidder.id);
 
     const orderQueueLength = await orderQueue.getWaiting()
@@ -41,7 +41,7 @@ const bidderWorker = new Worker(
             }
         }
     }
-    await bidderQueue.add('bidderQueue', {onlineTimestamp: Date.now()})
+    await bidderQueue.add(bidder.name, {onlineTimestamp: Date.now()})
     console.log('bidderworker pause length: ', orderQueueLength.length)
     if(orderQueueLength.length == 1){
         bidderWorker.pause()
@@ -105,19 +105,19 @@ app.use(cors({
       try {
           // Get the first 10 jobs in the waiting state
           const waitingJobs = await bidderQueue.getWaiting(0, 10);
-          console.log('Waiting Bidders:', waitingJobs.map((job)=>{return job.id + ' ' + job.name + ' ' + job.data.onlineTimestamp}));
+          console.log('Waiting Bidders:', waitingJobs.map((job)=>{return job.name + ' ' + job.data.onlineTimestamp}));
   
       // Get the first 10 jobs in the active state
       const activeJobs = await bidderQueue.getActive(0, 10);
-      console.log('Active Bidders:', activeJobs.map((job)=>{return job.id + ' ' + job.name + ' ' + job.data.onlineTimestamp}));
+      console.log('Active Bidders:', activeJobs.map((job)=>{return job.name + ' ' + job.data.onlineTimestamp}));
       
       // Get the first 10 jobs in the completed state
       const completedJobs = await bidderQueue.getCompleted(0, 10);
-      console.log('Completed Bidders:', completedJobs.map((job)=>{return job.id + ' ' + job.name + ' ' + job.data.onlineTimestamp}));
+      console.log('Completed Bidders:', completedJobs.map((job)=>{return job.name + ' ' + job.data.onlineTimestamp}));
       
       // Get the first 10 jobs in the failed state
       const failedJobs = await bidderQueue.getFailed(0, 10);
-      console.log('Failed Bidders:', failedJobs.map((job)=>{return job.id + ' ' + job.name + ' ' + job.data.onlineTimestamp}));
+      console.log('Failed Bidders:', failedJobs.map((job)=>{return job.name + ' ' + job.data.onlineTimestamp}));
       console.log('\n')
     } catch (error) {
       console.error('Error checking queue jobs:', error);
@@ -150,9 +150,11 @@ app.use(cors({
 // API endpoint to add an order to the queue
 app.post('/create-bidder', async (req, res) => {
     try {
+        const { user } = req.body
+        console.log(user)
         console.log('create bidder')
         const onlineTimestamp = Date.now(); // Use a timestamp as the order ID
-        await bidderQueue.add('bidderQueue', { onlineTimestamp });
+        await bidderQueue.add(user, { onlineTimestamp });
         res.status(200).json({ message: 'Bidder added to queue', onlineTimestamp });
     } catch (error) {
         console.log(error)
