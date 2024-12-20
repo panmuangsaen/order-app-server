@@ -155,9 +155,12 @@ app.post('/create-bidder', async (req, res) => {
         console.log('create bidder')
         const onlineTimestamp = Date.now(); // Use a timestamp as the order ID
         if(online){
-            const resultQueue = await bidderQueue.add(user, { onlineTimestamp });
-            res.status(200).json({ message: 'Bidder added to queue', id: resultQueue.id });
+            await bidderQueue.add(user, { onlineTimestamp });
+            res.status(200).json({ message: 'Bidder added to queue', onlineTimestamp });
         }else{
+            const id = await bidderQueue.getJobs()
+            const idToDelete = id.find((value)=>{return value.name == user}).id
+            await bidderQueue.remove(idToDelete)
             res.status(200).json({ message: 'Bidder added to queue', onlineTimestamp });
         }
     } catch (error) {
