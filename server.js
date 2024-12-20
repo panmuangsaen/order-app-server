@@ -150,12 +150,16 @@ app.use(cors({
 // API endpoint to add an order to the queue
 app.post('/create-bidder', async (req, res) => {
     try {
-        const { user } = req.body
+        const { user, online } = req.body
         console.log(user)
         console.log('create bidder')
         const onlineTimestamp = Date.now(); // Use a timestamp as the order ID
-        await bidderQueue.add(user, { onlineTimestamp });
-        res.status(200).json({ message: 'Bidder added to queue', onlineTimestamp });
+        if(online){
+            const resultQueue = await bidderQueue.add(user, { onlineTimestamp });
+            res.status(200).json({ message: 'Bidder added to queue', id: resultQueue.id });
+        }else{
+            res.status(200).json({ message: 'Bidder added to queue', onlineTimestamp });
+        }
     } catch (error) {
         console.log(error)
         res.status(500).json({ message: 'Error adding bidder to queue', error });
